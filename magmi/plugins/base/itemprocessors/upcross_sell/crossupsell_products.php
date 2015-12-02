@@ -175,7 +175,7 @@ class CrossUpsellProducts extends Magmi_ItemProcessor
                      " (link_type_id,product_id,linked_product_id)  $bsql";
                 $data = array_merge($joininfo["data"]["cpe2.sku"], array($item["sku"]));
                 $this->insert($sql, $data);
-                $this->updateLinkAttributeTable($item["sku"], $joininfo, 'up_sell');
+                $this->updateLinkAttributeTable($item["sku"], $joininfo, 'up_sell', $item['us_position']);
             }
         }
     }
@@ -196,16 +196,16 @@ class CrossUpsellProducts extends Magmi_ItemProcessor
                      " (link_type_id,product_id,linked_product_id)  $bsql";
                 $data = array_merge($joininfo["data"]["cpe2.sku"], array($item["sku"]));
                 $this->insert($sql, $data);
-                $this->updateLinkAttributeTable($item["sku"], $joininfo, 'cross_sell');
+                $this->updateLinkAttributeTable($item["sku"], $joininfo, 'cross_sell', $item['cs_position']);
             }
         }
     }
 
-    public function updateLinkAttributeTable($sku, $joininfo, $reltype)
+    public function updateLinkAttributeTable($sku, $joininfo, $reltype, $position=999)
     {
         // insert into attribute link attribute int table,reusing the same relations
         // this enable to mass add
-        $bsql = "SELECT cpl.link_id,cpla.product_link_attribute_id,0 as value
+        $bsql = "SELECT cpl.link_id,cpla.product_link_attribute_id,$position as value
 	   	   FROM " . $this->tablename("catalog_product_entity") . " AS cpe
 		   JOIN " . $this->tablename("catalog_product_entity") . " AS cpe2 ON cpe2.entity_id!=cpe.entity_id
 		   JOIN " . $this->tablename("catalog_product_link_type") . " AS cplt ON cplt.code=?
@@ -214,6 +214,7 @@ class CrossUpsellProducts extends Magmi_ItemProcessor
 		   WHERE cpe.sku=?";
         $sql = "INSERT IGNORE INTO " . $this->tablename("catalog_product_link_attribute_int") .
              " (link_id,product_link_attribute_id,value) $bsql";
+
         $this->insert($sql, array($reltype, $sku));
     }
 
